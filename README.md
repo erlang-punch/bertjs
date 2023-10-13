@@ -22,32 +22,32 @@ SHOULD BE converted to String.
 | `SMALL_ATOM_UTF8_EXT` |    | `String`         |
 | `BINARY_EXT`          |    | `ArrayBuffer`    |
 | `BIT_BINARY_EXT`      |    | `ArrayBuffer`    |
-| `SMALL_INTEGER_EXT`   |    | `Int8`           |
-| `INTEGER_EXT`         |    | `Int32`          |
-| `LARGE_BIG_EXT`       |    | `BigInt`         |
-| `SMALL_BIG_EXT`       |    | `BigInt`         |
-| `FLOAT_EXT`           |    | `Float`          |
-| `NEW_FLOAT_EXT`       |    | `Float`          |
+| `SMALL_INTEGER_EXT`   |    | `Number`         |
+| `INTEGER_EXT`         |    | `Number`         |
+| `LARGE_BIG_EXT`       |    | `Number`         |
+| `SMALL_BIG_EXT`       |    | `Number`         |
+| `FLOAT_EXT`           |    | `Number`         |
+| `NEW_FLOAT_EXT`       |    | `Number`         |
 | `STRING_EXT`          |    | `String`         |
 | `LIST_EXT`            |    | `Array`          |
 | `NIL_EXT`             |    | `Array`          | 
 | `SMALL_TUPLE_EXT`     |    | `Map`            |
 | `LARGE_TUPLE_EXT`     |    | `Map`            |
-| `MAP_EXT`             |    | `Set`            |
+| `MAP_EXT`             |    | `Map`            |
 
 
 | javascript type  | to | erlang term    | comments
 |------------------|----|-----------------|---------|
-| `Null`           |    |`ATOM_EXT`      | encoded as `nil`
-| `String`         |    | `STRING_EXT`    | -
+| `Null`           |    | `ATOM_EXT`      | encoded as `nil`
+| `String`         |    | `STRING_EXT`    | or binary_ext (depending of the content)
 | `ArrayBuffer`    |    | `BINARY_EXT`    | -
 | `Boolean`        |    | `ATOM_EXT`      | encoded as `true` or `false`
-| `Map`            |    | `LIST_EXT`      | encoded as tuple or list of tuple
-| `Set`            |    | `MAP_EXT`       |
+| `Map`            |    | `MAP_EXT`       |
+| `Set`            |    | `LIST_EXT`      |
 | `ArrayBuffer`    |    | `BINARY_EXT`    |
 | `Array`          |    | `LIST_EXT`      |
 | `Number`         |    | `NEW_FLOAT_EXT` |
-| `Int8`           |    | `SMALL_INTEGER` |
+| `Int8`           |    | `SMALL_INTEGER` | when 0 =< Int =< 255 
 | `Int16`          |    | `INTEGER_EXT`   |
 | `Int32`          |    | `INTEGER_EXT`   |
 | `BigInt`         |    | `LARGE_BIG_EXT` |

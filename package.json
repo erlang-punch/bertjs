@@ -1,0 +1,27 @@
+{
+    "name": "bert",
+    "version": "0.1.0",
+    "description": "Erlang BERT/ETF Serializer",
+    "main": "bert/index.js",
+    "scripts": {
+        "repl": "node-repl ./bert/index.js",
+        "test": "mocha ./test/test.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://gitub.com/erlang-punch/bertjs"
+    },
+    "author": "Mathieu Kerjouan",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/erlang-punch/bertjs/issues"
+    },
+    "homemage": {
+        "url": "https://github.com/erlang-punch/bertjs"
+    },
+    "devDependencies": {
+        "chai": "^4.3.10",
+        "mocha": "^10.2.0",
+        "node-repl": "^2.0.2"
+    }
+}
