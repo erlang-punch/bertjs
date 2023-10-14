@@ -25,12 +25,23 @@ var bert = require('../bert/index.js');
 var expect = require('chai').expect;
 
 describe('Decoder', function () {
-    it('should fail when a not valid ETF/BERT payload is passed', function () {
-        let invalid_payload = function () { bert.decode([0,1,2,3]) };
-        expect(invalid_payload).to.throw();
+    describe('Default decoding behavior', function() {
+        it('should fail when a not valid ETF/BERT payload is passed', function () {
+            let invalid_payload = function () { bert.decode([0,1,2,3]) };
+            expect(invalid_payload).to.throw();
+        });
+        
+        // An empty payload AFTER a valid header SHOULD fail.
+        // it('should not fail when a valid payload is passed', function () {
+        //     let valid_payload = [131];
+        //    expect(bert.decode(valid_payload)).to.be.equal(null);
+        // });
     });
-    it('should not fail when a valid payload is passed', function () {
-        let valid_payload = [131];
-        expect(bert.decode(valid_payload)).to.be.equal(null);
+
+    describe('Atoms support', function() {
+        it('it should decode ATOM_EXT', function () {
+            let atom_ext = [131,100,0,4,116,101,115,116];
+            expect(bert.decode(atom_ext)).to.be.equal("test");
+        });
     });
 });
