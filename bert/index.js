@@ -160,7 +160,7 @@ function decode_inner(view) {
  * is converted to true and "false" is converted to false.
  *
  * @param {view} A DataView object.
- * @returns {term} A decoded Atom as String.
+ * @returns {[atom,view]} A decoded Atom as String.
  */
 function decode_atom_ext(view) {
     let length = view.getUint16(view);
@@ -187,7 +187,7 @@ function decode_atom_ext(view) {
  * Decodes a SMALL_ATOM_EXT term.
  *
  * @param {view} A DataView object.
- * @returns {term} A decoded Atom as String.
+ * @returns {[atom,view]} A decoded Atom as String.
  */
 function decode_small_atom_ext(view) {
     let length = view.getUint8(view);
@@ -205,7 +205,7 @@ function decode_small_atom_ext(view) {
  * Decodes a SMALL_ATOM_UTF8_EXT term.
  *
  * @param {view} A DataView object.
- * @returns {term} A decoded Atom as String.
+ * @returns {[atom,view]} A decoded Atom as String.
  */
 function decode_small_atom_utf8_ext(view) {
     let length = view.getUint8(view);
@@ -223,7 +223,7 @@ function decode_small_atom_utf8_ext(view) {
  * Decodes a ATOM_UTF8_EXT term.
  *
  * @param {view} A DataView object.
- * @returns {term} A decoded Atom as String.
+ * @returns {[atom,view]} A decoded Atom as String.
  */
 function decode_atom_utf8_ext(view) {
     let length = view.getUint16(view);
@@ -240,8 +240,8 @@ function decode_atom_utf8_ext(view) {
 /**
  * Decodes a SMALL_INTEGER_EXT term.
  *
- * param {view} A DataView object.
- * returns {integer} An integer.
+ * @param {view} A DataView object.
+ * @returns {[integer,view]} An integer.
  */
 function decode_small_integer_ext(view) {
     let integer = view.getUint8(view);
@@ -252,8 +252,8 @@ function decode_small_integer_ext(view) {
 /**
  * Decodes an INTEGER_EXT term.
  *
- * param {view} A DataView object.
- * returns {integer} An integer.
+ * @param {view} A DataView object.
+ * @returns {[integer, view]} An integer.
  */
 function decode_integer_ext(view) {
     let integer = view.getInt32(view);
@@ -265,8 +265,8 @@ function decode_integer_ext(view) {
  * Decodes a STRING_EXT term. This is an Erlang string containing only
  * integers values from 0 to 255.
  *
- * param {view} A DataView object.
- * returns {string} An ASCII string.
+ * @param {view} A DataView object.
+ * @returns {[string, view]} An ASCII string.
  */
 function decode_string_ext(view) {
     let length = view.getUint16(view);
@@ -281,10 +281,11 @@ function decode_string_ext(view) {
 }
 
 /**
- * This function can't work for the moment, because we are not sharing
- * "view" state. All compound terms can't work without that. Anyway, we
- * already have the logic for practically all common terms.
+ * Decodes a LIST_EXT term.
  *
+ * @param {view} A DataView object
+ * @returns {[array, view]} A formated list and an updated DataView
+ *                         Object
  */
 function decode_list_ext(view) {
     let length = view.getUint32(view);
@@ -305,8 +306,8 @@ function decode_list_ext(view) {
 /**
  * Decodes a NIL_EXT term. It will return an empty list.
  *
- * param {view} A DataView object.
- * returns {array} An empty array.
+ * @param {view} A DataView object.
+ * @returns {[array, view]} An empty array.
  */
 function decode_nil_ext(view) {
     return [[], view];
@@ -318,8 +319,8 @@ function decode_nil_ext(view) {
  * code to the developer. It could be automatically converted to the
  * wanted data-structures.
  *
- * param {view} A DataView object.
- * returns {binary} An Uint8Array object.
+ * @param {view} A DataView object.
+ * @returns {[binary, view]} An Uint8Array object.
  */
 function decode_binary_ext(view) {
     let length = view.getUint32(view);
