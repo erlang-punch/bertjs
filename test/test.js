@@ -149,14 +149,6 @@ describe('Decoder', () => {
             expect(string).to.be.equal(result);
         });
     });
-    describe('List support', () => {
-        it('should decode a NIL_EXT (empty list)', () => {
-            let input = [131,106];
-            let string = bert.decode(input);
-            let result = [];
-            expect(string).to.be.deep.equal(result);
-        });
-    });
     describe('Binary support', () => {
         it('should decode an empty BINARY_EXT', () => {
             let input = [131,109,0,0,0,0];
@@ -176,6 +168,55 @@ describe('Decoder', () => {
                 return array;
             };
             expect(string).to.be.deep.equal(result());
+        });
+    });
+        describe('List support', () => {
+        it('should decode a NIL_EXT (empty list)', () => {
+            let input = [131,106];
+            let string = bert.decode(input);
+            let result = [];
+            expect(string).to.be.deep.equal(result);
+        });
+        it('should decode a list of ATOM_EXT', () => {
+            let input = [131,108,0,0, 0,3,100,0,
+                         1,97,100,0,  1,98,100,0,
+                         1,99,106];
+            let list = bert.decode(input);
+            let result = ["a", "b", "c"];
+            expect(list).to.be.deep.equal(result);
+        });
+        it('should decode a list of STRING_EXT', () => {
+            let input = [131,108,0,0, 0,2,107,0,
+                         5,116,101,115, 116,49,107,0,
+                         5,116,101,115, 116,50,106];
+            let list = bert.decode(input);
+            let result = ["test1", "test2"];
+            expect(list).to.be.deep.equal(result);
+        })
+        it('should decode a list of SMALL_INTEGER_EXT and INTEGER_EXT', () => {
+            let input = [131,108,0,0,0,4,97,1,97,2,97,3,98,0,0,1,0,106];
+            let list = bert.decode(input);
+            let result = [1,2,3,256];
+            expect(list).to.be.deep.equal(result);
+        });
+        it('should decode a list of LIST_EXT', () => {
+            let input = [131,108,0,0,0,3,106,106,108,0,0,0,2,106,106,106,106];
+            let list = bert.decode(input);
+            let result = [[],[],[[],[]]];
+            expect(list).to.be.deep.equal(result);
+        });
+        it('should decode a list of BINARY_EXT', () => {
+            let input = [131,108,0,0,0,2,109,0,0,0,3,1,2,3,109,0,0,0,3,4,5,6,106];
+            let list = bert.decode(input);
+            let binary = (array) => {
+                let bin = new Uint8Array(array.length);
+                for (let i=0; i<array.length; i++) {
+                    bin[i] = array[i];
+                }
+                return bin;
+            }
+            let result = [binary([1,2,3]), binary([4,5,6])];
+            expect(list).to.be.deep.equal(result);
         });
     });
 });

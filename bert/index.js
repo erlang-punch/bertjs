@@ -71,7 +71,7 @@ const BERT_STRING_EXT = 107;
 
 // List support
 const BERT_NIL_EXT = 106;
-// const BERT_LIST_EXT = 108;
+const BERT_LIST_EXT = 108;
 
 // Binary support
 const BERT_BINARY_EXT = 109;
@@ -116,7 +116,8 @@ function decode_header(view) {
         throw new TypeError(`Invalid BERT header found with code ${identifier}`);
     }
     let next_view = update_view(view, 1);
-    return decode_inner(next_view);
+    let [term, final_view] =decode_inner(next_view);
+    return term;
 }
 
 /**
@@ -143,6 +144,8 @@ function decode_inner(view) {
         return decode_integer_ext(next_view);
     case BERT_STRING_EXT:
         return decode_string_ext(next_view);
+    case BERT_LIST_EXT:
+        return decode_list_ext(next_view);
     case BERT_NIL_EXT:
         return decode_nil_ext(next_view);
     case BERT_BINARY_EXT:
@@ -167,15 +170,16 @@ function decode_atom_ext(view) {
         let c = data_view.getUint8(i);
         atom += String.fromCharCode(c);
     }
+    let next_view = update_view(data_view, length);
     switch (atom) {
     case "nil":
-        return null;
+        return [null, next_view];
     case "true":
-        return true;
+        return [true, next_view];
     case "false":
-        return false;
+        return [false, next_view];
     default:
-        return atom;
+        return [atom, next_view];
     }
 }
 
@@ -193,7 +197,8 @@ function decode_small_atom_ext(view) {
         let c = data_view.getUint8(i);
         atom += String.fromCharCode(c);
     }
-    return atom;
+    let next_view = update_view(data_view, length);
+    return [atom, next_view];
 }
 
 /**
@@ -210,7 +215,8 @@ function decode_small_atom_utf8_ext(view) {
         let c = data_view.getUint8(i);
         atom[i] = c;
     }
-    return new TextDecoder().decode(atom);
+    let next_view = update_view(data_view, length);
+    return [new TextDecoder().decode(atom), next_view];
 }
 
 /**
@@ -227,7 +233,8 @@ function decode_atom_utf8_ext(view) {
         let c = data_view.getUint8(i);
         atom[i] = c;
     }
-    return new TextDecoder().decode(atom);
+    let next_view = update_view(data_view, length);
+    return [new TextDecoder().decode(atom), next_view];
 }
 
 /**
@@ -238,8 +245,8 @@ function decode_atom_utf8_ext(view) {
  */
 function decode_small_integer_ext(view) {
     let integer = view.getUint8(view);
-    let data_view = update_view(view,1);
-    return integer;
+    let next_view = update_view(view,1);
+    return [integer, next_view];
 }
 
 /**
@@ -250,8 +257,8 @@ function decode_small_integer_ext(view) {
  */
 function decode_integer_ext(view) {
     let integer = view.getInt32(view);
-    let data_view = update_view(view,4);
-    return integer;
+    let next_view = update_view(view,4);
+    return [integer, next_view];
 }
 
 /**
@@ -269,7 +276,30 @@ function decode_string_ext(view) {
         let c = data_view.getUint8(i);
         string[i] = c;
     }
-    return new TextDecoder().decode(string);
+    let next_view = update_view(data_view, length);
+    return [new TextDecoder().decode(string), next_view];
+}
+
+/**
+ * This function can't work for the moment, because we are not sharing
+ * "view" state. All compound terms can't work without that. Anyway, we
+ * already have the logic for practically all common terms.
+ *
+ */
+function decode_list_ext(view) {
+    let length = view.getUint32(view);
+    let data_view = update_view(view, 4);
+    let list = new Array();
+    for (let i=0; i<length; i++) {
+        let [item, next_view] = decode_inner(data_view);        
+        list.push(item);
+        data_view = next_view
+    }
+    let [n, final_view] = decode_inner(data_view);
+    if (n.length === 0)
+        return [list, final_view];
+    else
+        throw new Error("List does not contain a final NIL_EXT.");
 }
 
 /**
@@ -279,7 +309,7 @@ function decode_string_ext(view) {
  * returns {array} An empty array.
  */
 function decode_nil_ext(view) {
-    return [];
+    return [[], view];
 }
 
 /**
@@ -299,7 +329,8 @@ function decode_binary_ext(view) {
         let c = data_view.getUint8(i);
         string[i] = c;
     }
-    return string;
+    let next_view = update_view(data_view, length);
+    return [string, next_view];
 }
 
 /**
