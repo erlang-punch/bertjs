@@ -1,9 +1,51 @@
 # bertjs
 
+![Erlang Punch Bertjs License](https://img.shields.io/github/license/erlang-punch/bertjs)
+![Erlang Punch Bertjs Top Language](https://img.shields.io/github/languages/top/erlang-punch/bertjs)
+![Erlang Punch Bertjs Workflow Status (main branch)](https://img.shields.io/github/actions/workflow/status/erlang-punch/bertjs/test.yaml?branch=main)
+![Erlang Punch Bertjs Last Commit](https://img.shields.io/github/last-commit/erlang-punch/bertjs)
+![Erlang Punch Bertjs Code Size (bytes)](https://img.shields.io/github/languages/code-size/erlang-punch/bertjs)
+![Erlang Punch Bertjs Repository File Count](https://img.shields.io/github/directory-file-count/erlang-punch/bertjs)
+![Erlang Punch Bertjs Repository Size](https://img.shields.io/github/repo-size/erlang-punch/bertjs)
+
 A production ready implementation of BERT/ETF in Javascript (inspired
 by BERT-JS).
 
 ## Usage
+
+`node-repl` is installed and functions exported (or not) can be used
+with node shell.
+
+```sh
+npm run repl
+```
+
+### Decoding
+
+```javascript
+// atom support
+"test" === decode([131,100,0,4,116,101,115,116])
+
+// erlang string support
+"test" === decode([131,107,0,4,116,101,115,116])
+
+// binary support
+Uint8Array(4) [ 116, 101, 115, 116 ] === decode([131,109,0,0,0,4,116,101,115,116])
+
+// list support
+[[],[[],[]]] === decode([131,108,0,0,0,2,106,108,0,0,0,2,106,106,106,106])
+```
+
+### Encoding
+
+```javascript
+```
+
+## Testing
+
+```sh
+npm test
+```
 
 ## Type Mapping
 

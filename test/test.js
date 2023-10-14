@@ -90,6 +90,12 @@ describe('Decoder', () => {
         });
     });
     describe('Boolean support', () => {
+        it('should decode an ATOM_EXT "undefined" to undefined', () => {
+            let input = [131,100,0,9,117,110,100,101,102,105,110,101,100];
+            let atom = bert.decode(input);
+            let result = undefined;
+            expect(atom).to.be.equal(result);
+        });
         it('should decode an ATOM_EXT "nil" to null', () => {
             let input = [131,100,0,3,110,105,108];
             let atom = bert.decode(input);

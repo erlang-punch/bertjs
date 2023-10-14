@@ -172,6 +172,8 @@ function decode_atom_ext(view) {
     }
     let next_view = update_view(data_view, length);
     switch (atom) {
+    case "undefined":
+        return [undefined, next_view];
     case "nil":
         return [null, next_view];
     case "true":
