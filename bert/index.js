@@ -81,7 +81,7 @@ const BERT_BINARY_EXT = 109;
 // const BERT_LARGE_TUPLE_EXT = 105;
 
 // Map support
-// const BERT_MAP_EXT = 116;
+const BERT_MAP_EXT = 116;
 
 /**
  * Decodes an ETF/BERT payload. This function can return differend
@@ -150,6 +150,8 @@ function decode_inner(view) {
         return decode_nil_ext(next_view);
     case BERT_BINARY_EXT:
         return decode_binary_ext(next_view);
+    case BERT_MAP_EXT:
+        return decode_map_ext(next_view);
     default:
         throw new TypeError(`Unsupported type found with code ${identifier}`);
     }
@@ -294,7 +296,7 @@ function decode_list_ext(view) {
     let data_view = update_view(view, 4);
     let list = new Array();
     for (let i=0; i<length; i++) {
-        let [item, next_view] = decode_inner(data_view);        
+        let [item, next_view] = decode_inner(data_view);
         list.push(item);
         data_view = next_view
     }
@@ -334,6 +336,25 @@ function decode_binary_ext(view) {
     }
     let next_view = update_view(data_view, length);
     return [string, next_view];
+}
+
+/**
+ * Decodes a MAP_EXT term.
+ *
+ * @param {view} A DataView Object.
+ * @return {[map, view]} return a map and an updated DataView.
+ */
+function decode_map_ext(view) {
+    let arity = view.getUint32(view);
+    let next_view = update_view(view, 4);
+    let map = new Map();
+    for (let i=0; i<arity; i++) {
+        let [key, key_view] = decode_inner(next_view);
+        let [value, value_view] = decode_inner(key_view);
+        map.set(key, value);
+        next_view = value_view;
+    }
+    return [map, next_view];
 }
 
 /**

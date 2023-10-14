@@ -176,7 +176,7 @@ describe('Decoder', () => {
             expect(string).to.be.deep.equal(result());
         });
     });
-        describe('List support', () => {
+    describe('List support', () => {
         it('should decode a NIL_EXT (empty list)', () => {
             let input = [131,106];
             let string = bert.decode(input);
@@ -225,4 +225,109 @@ describe('Decoder', () => {
             expect(list).to.be.deep.equal(result);
         });
     });
+    describe('Map support', () => {
+        it('should decode an empty MAP_EXT', () => {
+            let input = [131,116,0,0,0,0];
+            let map = bert.decode(input);
+            let result = new Map();
+            expect(map).to.be.deep.equal(result);
+        });
+        it('should decode a MAP_EXT with integers as key and value', () => {
+            let input = [131,116,0,0,0,1,97,1,97,2];
+            let map = bert.decode(input);
+            let result = (new Map()).set(1,2);
+            expect(map).to.be.deep.equal(result);
+        });
+        it('should decode a MAP_EXT with atoms as key and value', () => {
+            let input = [131,116,0,0,0,1,100,0,1,97,100,0,1,98];
+            let map = bert.decode(input);
+            let result = (new Map()).set("a","b");
+            expect(map).to.be.deep.equal(result);
+        });
+        it('should decode a MAP_EXT with list as key and value', () => {
+            let input = [131,116,0,0,0,1,106,106];
+            let map = bert.decode(input);
+            let result = (new Map()).set([],[]);
+            expect(map).to.be.deep.equal(result);
+        });
+        it('should decode a MAP_EXT with (empty) binary as key and value', () => {
+            let input = [131,116,0,0,0,1,109,0,0,0,0,109,0,0,0,0];
+            let map = bert.decode(input);
+            let result = (new Map()).set(new Uint8Array(), new Uint8Array());
+            expect(map).to.be.deep.equal(result);
+        });
+        it('should decode a MAP_EXT with random kind of term as key and values', () => {
+            // #{ a => 1, [] => "b", <<>> => #{} }
+            let input = [131,116,0,0, 0,3,100,0, 1,97,97,1,
+                         106,107,0,1, 98,109,0,0, 0,0,116,0,
+                         0,0,0];
+            let map = bert.decode(input);
+            let ret = () => {
+                let m = new Map();
+                m.set('a', 1);
+                m.set([], 'b');
+                m.set(new Uint8Array(), new Map());
+                return m;
+            };
+            let result = ret();
+            expect(map).to.be.deep.equal(result);
+        });
+    });
+    /*
+    describe('Tuple support', () => {
+        it('should decode an empty SMALL_TUPLE_EXT', () => {
+            let input = [131,104,0];
+            let tuple = bert.decode(input);
+            let result = [];
+            expect(tuple).to.be.deep.equal(result);
+        });
+        it('should decode a SMALL_TUPLE_EXT with atoms', () => {
+            let input = [131,104,2,100,0,2,111,107,100,0,4,116,101,115,116];
+            let tuple = bert.decode(input);
+            let result = ??? []
+        });
+        it('should decode an empty LARGE_TUPLE_EXT', () => {
+            let input = [131,105,0,0,0,0];
+            let tuple = bert.decode(input);
+            let result = ??? []
+        });
+        it('should decode a LARGE_TUPLE_EXT with atoms', () => {
+            let input = [131,105,0,0, 1,1,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0, 97,0,97,0, 97,0,97,0,
+                          97,0,97,0, 97,0,97,0];
+            let tuple = bert.decode(input);
+            let result = ??? []
+        });
+    });
+    */
 });
