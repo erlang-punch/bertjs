@@ -57,9 +57,31 @@ const BERT_ATOM_EXT = 100;
 const BERT_SMALL_ATOM_EXT = 115;
 const BERT_SMALL_ATOM_UTF8_EXT = 119;
 const BERT_ATOM_UTF8_EXT = 118;
+
 // Numbers support
 const BERT_SMALL_INTEGER_EXT = 97;
 const BERT_INTEGER_EXT = 98;
+// const BERT_SMALL_BIG_EXT = 110;
+// const BERT_LARGE_BIG_EXT = 111;
+// const BERT_FLOAT_EXT = 99;
+// const NEW_FLOAT_EXT = 70;
+
+// String support
+const BERT_STRING_EXT = 107;
+
+// List support
+const BERT_NIL_EXT = 106;
+// const BERT_LIST_EXT = 108;
+
+// Binary support
+const BERT_BINARY_EXT = 109;
+
+// Tuple support
+// const BERT_SMALL_TUPLE_EXT = 104;
+// const BERT_LARGE_TUPLE_EXT = 105;
+
+// Map support
+// const BERT_MAP_EXT = 116;
 
 /**
  * Decodes an ETF/BERT payload. This function can return differend
@@ -119,6 +141,12 @@ function decode_inner(view) {
         return decode_small_integer_ext(next_view);
     case BERT_INTEGER_EXT:
         return decode_integer_ext(next_view);
+    case BERT_STRING_EXT:
+        return decode_string_ext(next_view);
+    case BERT_NIL_EXT:
+        return decode_nil_ext(next_view);
+    case BERT_BINARY_EXT:
+        return decode_binary_ext(next_view);
     default:
         throw new TypeError(`Unsupported type found with code ${identifier}`);
     }
@@ -204,6 +232,9 @@ function decode_atom_utf8_ext(view) {
 
 /**
  * Decodes a SMALL_INTEGER_EXT term.
+ *
+ * param {view} A DataView object.
+ * returns {integer} An integer.
  */
 function decode_small_integer_ext(view) {
     let integer = view.getUint8(view);
@@ -213,11 +244,62 @@ function decode_small_integer_ext(view) {
 
 /**
  * Decodes an INTEGER_EXT term.
+ *
+ * param {view} A DataView object.
+ * returns {integer} An integer.
  */
 function decode_integer_ext(view) {
     let integer = view.getInt32(view);
     let data_view = update_view(view,4);
     return integer;
+}
+
+/**
+ * Decodes a STRING_EXT term. This is an Erlang string containing only
+ * integers values from 0 to 255.
+ *
+ * param {view} A DataView object.
+ * returns {string} An ASCII string.
+ */
+function decode_string_ext(view) {
+    let length = view.getUint16(view);
+    let data_view = update_view(view, 2);
+    let string = new Uint8Array(length);
+    for (let i=0; i<length; i++) {
+        let c = data_view.getUint8(i);
+        string[i] = c;
+    }
+    return new TextDecoder().decode(string);
+}
+
+/**
+ * Decodes a NIL_EXT term. It will return an empty list.
+ *
+ * param {view} A DataView object.
+ * returns {array} An empty array.
+ */
+function decode_nil_ext(view) {
+    return [];
+}
+
+/**
+ * Decodes a BINARY_EXT term. It will return a TypedArray, but it
+ * should probably be better to let the control on this part of the
+ * code to the developer. It could be automatically converted to the
+ * wanted data-structures.
+ *
+ * param {view} A DataView object.
+ * returns {binary} An Uint8Array object.
+ */
+function decode_binary_ext(view) {
+    let length = view.getUint32(view);
+    let data_view = update_view(view, 4);
+    let string = new Uint8Array(length);
+    for (let i=0; i<length; i++) {
+        let c = data_view.getUint8(i);
+        string[i] = c;
+    }
+    return string;
 }
 
 /**

@@ -141,4 +141,41 @@ describe('Decoder', () => {
             expect(integer).to.be.equal(result);
         });
     });
+    describe('String support', () => {
+        it('should decode a STRING_EXT', () => {
+            let input = [131,107,0,4,116,101,115,116];
+            let string = bert.decode(input);
+            let result = "test";
+            expect(string).to.be.equal(result);
+        });
+    });
+    describe('List support', () => {
+        it('should decode a NIL_EXT (empty list)', () => {
+            let input = [131,106];
+            let string = bert.decode(input);
+            let result = [];
+            expect(string).to.be.deep.equal(result);
+        });
+    });
+    describe('Binary support', () => {
+        it('should decode an empty BINARY_EXT', () => {
+            let input = [131,109,0,0,0,0];
+            let string = bert.decode(input);
+            let result = new Uint8Array(0);
+            expect(string).to.be.deep.equal(result);
+        });
+        it('should decode a BINARY_EXT', () => {
+            let input = [131,109,0,0,0,4,116,101,115,116];
+            let string = bert.decode(input);
+            let result = () => {
+                let array = new Uint8Array(4);
+                array[0] = 116;
+                array[1] = 101;
+                array[2] = 115;
+                array[3] = 116;
+                return array;
+            };
+            expect(string).to.be.deep.equal(result());
+        });
+    });
 });
