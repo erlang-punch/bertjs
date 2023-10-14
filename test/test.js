@@ -26,7 +26,8 @@ var bert = require('../bert/index.js');
 var expect = require('chai').expect;
 
 describe('Decoder', () => {
-    describe('Default decoding behavior', () => {
+    
+    describe('Should have specific behaviors', () => {
         it('should fail when a not valid ETF/BERT payload is passed', () => {
             let invalid_payload = function () { bert.decode([0,1,2,3]) };
             expect(invalid_payload).to.throw();
@@ -38,7 +39,8 @@ describe('Decoder', () => {
         //    expect(bert.decode(valid_payload)).to.be.equal(null);
         // });
     });
-    describe('Atoms support', () => {
+    
+    describe('Should support Atoms', () => {
         it('should decode ATOM_EXT', () => {
             let input = [131,100,0,4,116,101,115,116];
             let atom_ext = bert.decode(input);
@@ -89,7 +91,8 @@ describe('Decoder', () => {
             expect(atom_utf8).to.be.equal(result);
         });
     });
-    describe('Boolean support', () => {
+    
+    describe('Should support Boolean', () => {
         it('should decode an ATOM_EXT "undefined" to undefined', () => {
             let input = [131,100,0,9,117,110,100,101,102,105,110,101,100];
             let atom = bert.decode(input);
@@ -115,7 +118,8 @@ describe('Decoder', () => {
             expect(atom).to.be.equal(result);
         });
     });
-    describe('Integers support', () => {
+    
+    describe('Should support Integers', () => {
         it('should decode a SMALL_INTEGER_EXT set to 0', () => {
             let input = [131,97,0];
             let integer = bert.decode(input);
@@ -147,7 +151,81 @@ describe('Decoder', () => {
             expect(integer).to.be.equal(result);
         });
     });
-    describe('String support', () => {
+
+    describe('Should support Floats', () => {
+        it('should decode FLOAT_EXT', () => {
+            let input = [131,99,49,48, 46,49,49,48, 48,48,48,48, 48,48,48,48,
+                         48,48,48,48, 48,48,48,48, 48,48,48,48, 48,101,45,48,
+                         49];
+            let float = bert.decode(input);
+            let result = 1.011;
+            expect(float).to.be.equal(result);
+        });
+
+        it('should decode NEW_FLOAT_EXT', () => {
+            let input = [131,70,63,240,45,14,86,4,24,147];
+            let float = bert.decode(input);
+            let result = 1.011;
+            expect(float).to.be.equal(result);
+        });
+    });
+
+    describe('Should support BigInt', () => {
+        it('should decode SMALL_BIG_EXT', () => {
+            let input = [131,110,20,0, 199,113,28,199, 113,156,185,123,
+                         128,138,160,75, 22,67,46,219, 76,61,242,1];
+            let bigint = bert.decode(input);
+            let result = 11111111111111111111111111111111111111111111111n;
+            expect(bigint).to.be.equal(result);
+        });
+        // produce infinity.
+        // it('should decode SMALL_BIG_EXT', () => {
+        //     let input = [131,111,0,0, 1,170,0,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,28, 199,113,28,199, 113,28,199,113,
+        //                 28,199,113,86, 181,85,216,126, 190,129,73,45,
+        //                 236,137,236,120, 63,216,204,64, 87,88,56,180,
+        //                 171,133,109,87, 105,40,79,114, 33,82,170,255,
+        //                 40,135,141,215, 217,61,130,8, 201,255,237,51,
+        //                 64,108,111,63, 131,75,204,252, 202,58,92,3,
+        //                 20,203,152,50, 152,154,67,125, 164,102,255,97,
+        //                 236,203,100,30, 147,131,31,92,
+        //                 156,252,109,234, 236,133,105,140,
+        //                 221,30,158,207, 245,119,120,214,
+        //                 230,40,138,47, 74,160,15,101, 221,243,203,223,
+        //                 203,182,29,98, 95,126,40,190, 18,87,235,233,
+        //                 58,165,211,199, 76,156,155,110, 57,105,74,67,
+        //                 25,205,26,206, 94,8,102,168, 34,137,55,254,
+        //                 140,15,61,25, 60,228,17,222, 52,102,119,140,
+        //                 51,29,216,67, 171,241,0,127, 212,153,114,173,
+        //                 215,234,85,199, 187,232,83,103,
+        //                 120,187,223,18, 142,89,111,254,
+        //                 250,32,223,125, 117,30,49,63, 93,25,96,115,
+        //                 24,159,129,237, 232,209,73,252, 3,111,35,89,
+        //                 244,70,161,155, 55,116,197,39, 82,210,74,185,
+        //                 190,164,230,234, 108,246,143,119,
+        //                 121,133,177,30, 138,38,38,168, 47,71,252,242,
+        //                 170,101,0,76, 39,14,73,25, 78,242,33,92,
+        //                 161,187,60,138, 92,162,128,132, 39,114,243,70,
+        //                 196,99,101,108, 210,197,192,66, 25,16,92,187,
+        //                 155,205,105,122, 238,108,108,53,
+        //                 35,103,249,77, 11,158,172,164, 18,139,93,63,
+        //                 114,209,99,127, 3];
+        //     let string = bert.decode(input);
+        //     let result = 1n;
+        //     expect(string).to.be.equal(result);
+        // });
+    });
+    
+    describe('Should support String', () => {
         it('should decode a STRING_EXT', () => {
             let input = [131,107,0,4,116,101,115,116];
             let string = bert.decode(input);
@@ -155,7 +233,8 @@ describe('Decoder', () => {
             expect(string).to.be.equal(result);
         });
     });
-    describe('Binary support', () => {
+    
+    describe('Should support Binary', () => {
         it('should decode an empty BINARY_EXT', () => {
             let input = [131,109,0,0,0,0];
             let string = bert.decode(input);
@@ -176,7 +255,8 @@ describe('Decoder', () => {
             expect(string).to.be.deep.equal(result());
         });
     });
-    describe('List support', () => {
+
+    describe('Shoud support List', () => {
         it('should decode a NIL_EXT (empty list)', () => {
             let input = [131,106];
             let string = bert.decode(input);
@@ -225,7 +305,8 @@ describe('Decoder', () => {
             expect(list).to.be.deep.equal(result);
         });
     });
-    describe('Map support', () => {
+    
+    describe('Should support Map', () => {
         it('should decode an empty MAP_EXT', () => {
             let input = [131,116,0,0,0,0];
             let map = bert.decode(input);
@@ -273,8 +354,9 @@ describe('Decoder', () => {
             expect(map).to.be.deep.equal(result);
         });
     });
+    
     /*
-    describe('Tuple support', () => {
+    describe('Should support Tuple', () => {
         it('should decode an empty SMALL_TUPLE_EXT', () => {
             let input = [131,104,0];
             let tuple = bert.decode(input);

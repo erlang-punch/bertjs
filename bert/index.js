@@ -61,10 +61,10 @@ const BERT_ATOM_UTF8_EXT = 118;
 // Numbers support
 const BERT_SMALL_INTEGER_EXT = 97;
 const BERT_INTEGER_EXT = 98;
-// const BERT_SMALL_BIG_EXT = 110;
+const BERT_FLOAT_EXT = 99;
+const BERT_NEW_FLOAT_EXT = 70;
+const BERT_SMALL_BIG_EXT = 110;
 // const BERT_LARGE_BIG_EXT = 111;
-// const BERT_FLOAT_EXT = 99;
-// const NEW_FLOAT_EXT = 70;
 
 // String support
 const BERT_STRING_EXT = 107;
@@ -142,6 +142,14 @@ function decode_inner(view) {
         return decode_small_integer_ext(next_view);
     case BERT_INTEGER_EXT:
         return decode_integer_ext(next_view);
+    case BERT_FLOAT_EXT:
+        return decode_float_ext(next_view);
+    case BERT_NEW_FLOAT_EXT:
+        return decode_new_float_ext(next_view);
+    case BERT_SMALL_BIG_EXT:
+        return decode_small_big_ext(next_view);
+    // case BERT_LARGE_BIG_EXT:
+    //    return decode_large_big_ext(next_view);
     case BERT_STRING_EXT:
         return decode_string_ext(next_view);
     case BERT_LIST_EXT:
@@ -264,6 +272,77 @@ function decode_integer_ext(view) {
     let next_view = update_view(view,4);
     return [integer, next_view];
 }
+
+/**
+ * Decodes a FLOAT_EXT (String format).
+ *
+ * @param {view} A DataView object.
+ * @returns {[float, view]} A float object and an updated view
+ */
+function decode_float_ext(view) {
+    let length = 31;
+    let buffer = new Uint8Array(length);
+    for (let i=0; i<length; i++) {
+        buffer[i] = view.getUint8(i);
+    }
+    let next_view = update_view(view, length);
+    let float_string = new TextDecoder().decode(buffer);
+    let float_final = Number.parseFloat(float_string);
+    return [float_final, next_view];
+}
+
+/**
+ * Decodes a NEW_FLOAT_EXT (IEEE format).
+ *
+ * @param {view} A DataView object.
+ * @returns {[float, view]} A float object and an updated view
+ */
+function decode_new_float_ext(view) {
+    let float = view.getFloat64();
+    let next_view = update_view(view, 8);
+    return [float, next_view];
+}
+
+/**
+ * Decodes SMALL_BIG_EXT term.
+ *
+ * @param {view} A DataView object.
+ * @returns {[bigint, view]} A BigInt object and an updated view.
+ */
+function decode_small_big_ext(view) {
+    let length = view.getUint8(view);
+    let sign_view = update_view(view, 1);
+    let sign = sign_view.getUint8(view);
+    let next_view = update_view(sign_view, 1);
+    let buffer = BigInt(0);
+    for (let i=0; i<length; i++) {
+        let d = next_view.getUint8();
+        buffer += BigInt(d*Math.pow(256,i));
+        next_view = update_view(next_view,1);
+    }
+    return [buffer, next_view];
+}
+
+/**
+ * Decodes LARGE_BIG_EXT term. returns Infinity with default Javascript
+ *
+ * @param {view} A DataView object.
+ * @returns {[bigint, view]} A BigInt object and an updated view.
+
+function decode_large_big_ext(view) {
+    let length = view.getUint32(view);
+    let sign_view = update_view(view, 4);
+    let sign = sign_view.getUint8(view);
+    let next_view = update_view(sign_view, 1);
+    let buffer = BigInt(0);
+    for (let i=0; i<length; i++) {
+        let d = next_view.getUint8();
+        buffer += BigInt(d*Math.pow(256,i));
+        next_view = update_view(next_view,1);
+    }
+    return [buffer, next_view];
+}
+ */
 
 /**
  * Decodes a STRING_EXT term. This is an Erlang string containing only
