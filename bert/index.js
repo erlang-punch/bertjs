@@ -52,7 +52,14 @@
  * - https://www.erlang.org/doc/apps/erts/erl_ext_dist
  */
 const BERT_START = 131;
+// Atoms support
 const BERT_ATOM_EXT = 100;
+const BERT_SMALL_ATOM_EXT = 115;
+const BERT_SMALL_ATOM_UTF8_EXT = 119;
+const BERT_ATOM_UTF8_EXT = 118;
+// Numbers support
+const BERT_SMALL_INTEGER_EXT = 97;
+const BERT_INTEGER_EXT = 98;
 
 /**
  * Decodes an ETF/BERT payload. This function can return differend
@@ -61,15 +68,20 @@ const BERT_ATOM_EXT = 100;
  * @param {ArrayBuffer} payload Data to decode
  */
 function decode(payload) {
+    // convert an Array to ArrayBuffer
     if (Array.isArray(payload)) {
         let buffer = array_to_array_buffer(payload);
         let view = new DataView(buffer);
         return decode_header(view);
     }
+
+    // if it's an ArrayBuffer, just use it
     if (payload.name === 'ArrayBuffer') {
         let view = new DataView(buffer);
         return decode_header(view);
     }
+
+    // else the data-structure is not supported.
     throw new TypeError(`Invalid type provided as arguments`);
 }
 
@@ -86,29 +98,39 @@ function decode_header(view) {
 }
 
 /**
- * Decodes inner terms from the payload.
+ * Decodes inner terms from the payload. The firt element MUST be a
+ * supported term.
  *
  */
 function decode_inner(view) {
     let identifier = view.getUint8(view);
+    let next_view = update_view(view, 1);
     switch (identifier) {
     case undefined:
         if (view.byteOffset === 1)
             return null;
     case BERT_ATOM_EXT:
-        let next_view = update_view(view, 1);
         return decode_atom_ext(next_view);
+    case BERT_SMALL_ATOM_EXT:
+        return decode_small_atom_ext(next_view);
+    case BERT_SMALL_ATOM_UTF8_EXT:
+        return decode_small_atom_utf8_ext(next_view);
+    case BERT_SMALL_INTEGER_EXT:
+        return decode_small_integer_ext(next_view);
+    case BERT_INTEGER_EXT:
+        return decode_integer_ext(next_view);
     default:
         throw new TypeError(`Unsupported type found with code ${identifier}`);
     }
 }
 
 /**
- * Decodes an ATOM_EXT term.
+ * Decodes an ATOM_EXT term. "nil" atom is converted to null, "true"
+ * is converted to true and "false" is converted to false.
  *
  * @param {view} A DataView object.
- * @returns {view} An updated view with new offset.
-  */
+ * @returns {term} A decoded Atom as String.
+ */
 function decode_atom_ext(view) {
     let length = view.getUint16(view);
     let data_view = update_view(view, 2);
@@ -117,9 +139,85 @@ function decode_atom_ext(view) {
         let c = data_view.getUint8(i);
         atom += String.fromCharCode(c);
     }
-    // let next_view = update_view(data_view, length);
-    // return next_view;
+    switch (atom) {
+    case "nil":
+        return null;
+    case "true":
+        return true;
+    case "false":
+        return false;
+    default:
+        return atom;
+    }
+}
+
+/**
+ * Decodes a SMALL_ATOM_EXT term.
+ *
+ * @param {view} A DataView object.
+ * @returns {term} A decoded Atom as String.
+ */
+function decode_small_atom_ext(view) {
+    let length = view.getUint8(view);
+    let data_view = update_view(view, 1);
+    let atom = "";
+    for (let i=0; i<length; i++) {
+        let c = data_view.getUint8(i);
+        atom += String.fromCharCode(c);
+    }
     return atom;
+}
+
+/**
+ * Decodes a SMALL_ATOM_UTF8_EXT term.
+ *
+ * @param {view} A DataView object.
+ * @returns {term} A decoded Atom as String.
+ */
+function decode_small_atom_utf8_ext(view) {
+    let length = view.getUint8(view);
+    let data_view = update_view(view, 1);
+    let atom = new Uint8Array(length);
+    for (let i=0; i<length; i++) {
+        let c = data_view.getUint8(i);
+        atom[i] = c;
+    }
+    return new TextDecoder().decode(atom);
+}
+
+/**
+ * Decodes a ATOM_UTF8_EXT term.
+ *
+ * @param {view} A DataView object.
+ * @returns {term} A decoded Atom as String.
+ */
+function decode_atom_utf8_ext(view) {
+    let length = view.getUint16(view);
+    let data_view = update_view(view, 2);
+    let atom = new Uint8Array(length);
+    for (let i=0; i<length; i++) {
+        let c = data_view.getUint8(i);
+        atom[i] = c;
+    }
+    return new TextDecoder().decode(atom);
+}
+
+/**
+ * Decodes a SMALL_INTEGER_EXT term.
+ */
+function decode_small_integer_ext(view) {
+    let integer = view.getUint8(view);
+    let data_view = update_view(view,1);
+    return integer;
+}
+
+/**
+ * Decodes an INTEGER_EXT term.
+ */
+function decode_integer_ext(view) {
+    let integer = view.getInt32(view);
+    let data_view = update_view(view,4);
+    return integer;
 }
 
 /**
@@ -137,7 +235,7 @@ function update_view(view, offset) {
  * Converts an Array to an ArrayBuffer. Array passed as argument MUST
  * contain only 1 byte (or 8 bits) values as integer, from 0 to 255
  * inclusive. This function will throw an exception if any other
- * values is found in the array.      
+ * values is found in the array.
  *
  * @param {array} An Array Object containing integers from 0 to 255
  * @returns {ArrayBuffer} the converted Array as ArrayBuffer
