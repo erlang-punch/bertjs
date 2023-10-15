@@ -45,19 +45,19 @@ describe('Decoder', () => {
             let input = [131,100,0,4,116,101,115,116];
             let atom_ext = bert.decode(input);
             let result = "test";
-            expect(atom_ext).to.be.equal(result);
+            expect(atom_ext.toString()).to.be.equal(result);
         });
         it('should decode SMALL_ATOM_EXT', () => {
             let input = [131,115,4,116,101,115,116];
             let small_atom_ext = bert.decode(input);
             let result = "test";
-            expect(small_atom_ext).to.be.equal(result);
+            expect(small_atom_ext.toString()).to.be.equal(result);
         });
         it('should decode SMALL_ATOM_UTF8_EXT', () => {
             let input = [131,119,4,240,157,149,150];
             let small_atom_utf8 = bert.decode(input);
             let result = '𝕖';
-            expect(small_atom_utf8).to.be.equal(result);
+            expect(small_atom_utf8.toString()).to.be.equal(result);
         });
         it('should decode ATOM_UTF8_EXT', () => {
             let input = [131,119,255,206, 181,225,188,176, 206,180,206,173,
@@ -88,7 +88,7 @@ describe('Decoder', () => {
                        + 'εἰδέναιμὲνμηδὲνπλὴναὐτὸτοῦτο.'
                        + 'εἰδέναιμὲνμηδὲνπλὴναὐτὸτοῦτο.'
                        + 'εἰδέναιμὲνμηδὲνπλὴναὐτὸτοῦτο';
-            expect(atom_utf8).to.be.equal(result);
+            expect(atom_utf8.toString()).to.be.equal(result);
         });
     });
     
@@ -211,7 +211,7 @@ describe('Decoder', () => {
         });
     });
 
-    describe('Shoud support List', () => {
+    describe('Should support List', () => {
         it('should decode a NIL_EXT (empty list)', () => {
             let input = [131,106];
             let string = bert.decode(input);
@@ -223,7 +223,11 @@ describe('Decoder', () => {
                          1,97,100,0,  1,98,100,0,
                          1,99,106];
             let list = bert.decode(input);
-            let result = ["a", "b", "c"];
+            let result = [
+                new bert.Atom("a"),
+                new bert.Atom("b"),
+                new bert.Atom("c")
+            ];
             expect(list).to.be.deep.equal(result);
         });
         it('should decode a list of STRING_EXT', () => {
@@ -277,7 +281,7 @@ describe('Decoder', () => {
         it('should decode a MAP_EXT with atoms as key and value', () => {
             let input = [131,116,0,0,0,1,100,0,1,97,100,0,1,98];
             let map = bert.decode(input);
-            let result = (new Map()).set("a","b");
+            let result = (new Map()).set(new bert.Atom("a"),new bert.Atom("b"));
             expect(map).to.be.deep.equal(result);
         });
         it('should decode a MAP_EXT with list as key and value', () => {
@@ -300,7 +304,7 @@ describe('Decoder', () => {
             let map = bert.decode(input);
             let ret = () => {
                 let m = new Map();
-                m.set('a', 1);
+                m.set(new bert.Atom('a'), 1);
                 m.set([], 'b');
                 m.set(new Uint8Array(), new Map());
                 return m;
@@ -320,7 +324,10 @@ describe('Decoder', () => {
         it('should decode a SMALL_TUPLE_EXT with atoms', () => {
             let input = [131,104,2,100,0,2,111,107,100,0,4,116,101,115,116];
             let tuple = bert.decode(input);
-            let result = ['ok', 'test'];
+            let result = [
+                new bert.Atom('ok'),
+                new bert.Atom('test')
+            ];
             expect(tuple).to.be.deep.equal(result);
         });
         it('should decode an empty LARGE_TUPLE_EXT', () => {

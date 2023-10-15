@@ -70,6 +70,45 @@ const BERT_SMALL_TUPLE_EXT = 104;
 const BERT_LARGE_TUPLE_EXT = 105;
 
 /**
+ * Atom class inheretied from String to act as an Erlang atom term.
+ *
+ */
+class Atom extends String {
+    constructor(...args) {
+        super(...args);
+    }
+}
+
+/**
+ * New class Tuple inherited from Array to act as an Erlang tuple
+ * term.
+ *
+ */
+class Tuple extends Array {
+    constructor(...args) {
+        super(...args);
+    }
+    concat() {
+        throw new Error("concat method is not allowed in Tuple");
+    }
+    sort() {
+        throw new Error("sort method is not allowed in Tuple");
+    }
+    pop() {
+        throw new Error("pop method is not allowed in Tuple");
+    }
+    push() {
+        throw new Error("push method is not allowed in Tuple");
+    }
+    shift() {
+        throw new Error("shift method is not allowed in Tuple");
+    }
+    splice() {
+        throw new Error("splice method is not allowed in Tuple");
+    }
+}
+
+/**
  * Decodes an ETF/BERT payload. This function can return differend
  * types based on its input.
  *
@@ -179,7 +218,7 @@ function decode_atom_ext(view) {
     case "false":
         return [false, next_view];
     default:
-        return [atom, next_view];
+        return [new Atom(atom), next_view];
     }
 }
 
@@ -198,7 +237,7 @@ function decode_small_atom_ext(view) {
         atom += String.fromCharCode(c);
     }
     let next_view = update_view(data_view, length);
-    return [atom, next_view];
+    return [new Atom(atom), next_view];
 }
 
 /**
@@ -216,7 +255,8 @@ function decode_small_atom_utf8_ext(view) {
         atom[i] = c;
     }
     let next_view = update_view(data_view, length);
-    return [new TextDecoder().decode(atom), next_view];
+    let atom_string = new TextDecoder().decode(atom);
+    return [new Atom(atom_string), next_view];
 }
 
 /**
@@ -234,7 +274,8 @@ function decode_atom_utf8_ext(view) {
         atom[i] = c;
     }
     let next_view = update_view(data_view, length);
-    return [new TextDecoder().decode(atom), next_view];
+    let atom_string = new TextDecoder().decode(atom);
+    return [new Atom(atom_string), next_view];
 }
 
 /**
@@ -431,7 +472,7 @@ function decode_map_ext(view) {
 function decode_small_tuple_ext(view) {
     let arity = view.getUint8(view);
     let next_view = update_view(view, 1);
-    let tuple = new Array();
+    let tuple = new Tuple();
     for (let i=0; i<arity; i++) {
         [term, next_view] = decode_inner(next_view);
         tuple[i] = term;
@@ -448,7 +489,7 @@ function decode_small_tuple_ext(view) {
 function decode_large_tuple_ext(view) {
     let arity = view.getUint32(view);
     let next_view = update_view(view, 4);
-    let tuple = new Array();
+    let tuple = new Tuple();
     for (let i=0; i<arity; i++) {
         [term, next_view] = decode_inner(next_view);
         tuple[i] = term;
@@ -492,8 +533,10 @@ function array_to_array_buffer(array) {
 
 /**
  * Exports decode() and encode() functions.
- *
+ * Exports Atom and Tuple classes.
  */
 module.exports = {
-    decode
+    decode,
+    Atom,
+    Tuple
 };
