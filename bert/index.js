@@ -52,36 +52,22 @@
  * - https://www.erlang.org/doc/apps/erts/erl_ext_dist
  */
 const BERT_START = 131;
-// Atoms support
 const BERT_ATOM_EXT = 100;
 const BERT_SMALL_ATOM_EXT = 115;
 const BERT_SMALL_ATOM_UTF8_EXT = 119;
 const BERT_ATOM_UTF8_EXT = 118;
-
-// Numbers support
 const BERT_SMALL_INTEGER_EXT = 97;
 const BERT_INTEGER_EXT = 98;
 const BERT_FLOAT_EXT = 99;
 const BERT_NEW_FLOAT_EXT = 70;
 const BERT_SMALL_BIG_EXT = 110;
-// const BERT_LARGE_BIG_EXT = 111;
-
-// String support
 const BERT_STRING_EXT = 107;
-
-// List support
 const BERT_NIL_EXT = 106;
 const BERT_LIST_EXT = 108;
-
-// Binary support
 const BERT_BINARY_EXT = 109;
-
-// Tuple support
-// const BERT_SMALL_TUPLE_EXT = 104;
-// const BERT_LARGE_TUPLE_EXT = 105;
-
-// Map support
 const BERT_MAP_EXT = 116;
+const BERT_SMALL_TUPLE_EXT = 104;
+const BERT_LARGE_TUPLE_EXT = 105;
 
 /**
  * Decodes an ETF/BERT payload. This function can return differend
@@ -148,8 +134,6 @@ function decode_inner(view) {
         return decode_new_float_ext(next_view);
     case BERT_SMALL_BIG_EXT:
         return decode_small_big_ext(next_view);
-    // case BERT_LARGE_BIG_EXT:
-    //    return decode_large_big_ext(next_view);
     case BERT_STRING_EXT:
         return decode_string_ext(next_view);
     case BERT_LIST_EXT:
@@ -160,6 +144,10 @@ function decode_inner(view) {
         return decode_binary_ext(next_view);
     case BERT_MAP_EXT:
         return decode_map_ext(next_view);
+    case BERT_SMALL_TUPLE_EXT:
+        return decode_small_tuple_ext(next_view);
+    case BERT_LARGE_TUPLE_EXT:
+        return decode_large_tuple_ext(next_view);
     default:
         throw new TypeError(`Unsupported type found with code ${identifier}`);
     }
@@ -434,6 +422,38 @@ function decode_map_ext(view) {
         next_view = value_view;
     }
     return [map, next_view];
+}
+
+/**
+ * Decodes SMALL_TUPLE_EXT as Array. 
+ *
+ */
+function decode_small_tuple_ext(view) {
+    let arity = view.getUint8(view);
+    let next_view = update_view(view, 1);
+    let tuple = new Array();
+    for (let i=0; i<arity; i++) {
+        [term, next_view] = decode_inner(next_view);
+        tuple[i] = term;
+    }
+    return [tuple, next_view];
+}
+
+/**
+ * Decodes LARGE_TUPLE_EXT as Array. A new type called Tuple should be
+ * used instead of Array with these properties: fixed length, no
+ * pop/push function, only set accessor on available indexes.
+ *
+ */
+function decode_large_tuple_ext(view) {
+    let arity = view.getUint32(view);
+    let next_view = update_view(view, 4);
+    let tuple = new Array();
+    for (let i=0; i<arity; i++) {
+        [term, next_view] = decode_inner(next_view);
+        tuple[i] = term;
+    }
+    return [tuple, next_view];
 }
 
 /**
